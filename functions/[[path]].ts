@@ -9,8 +9,31 @@ const remixHandler = createPagesFunctionHandler({
   build: serverBuild as unknown as ServerBuild,
 });
 
+// IP filtering logic: Fetch ALLOWED_IP from environment variables
 export const onRequest: PagesFunction = async (context) => {
   try {
+    // Get the IP address from the request headers (Cloudflare will add the real IP in 'cf-connecting-ip')
+    const forwardedFor = context.request.headers.get('cf-connecting-ip') ||
+                         context.request.headers.get('x-forwarded-for') ||
+                         context.request.headers.get('x-real-ip') ||
+                         '127.0.0.1';
+    const requestIp = forwardedFor.split(',')[0].trim();
+
+    // Fetch the allowed IP from environment variables
+    const allowedIp = context.env.ALLOWED_IP;
+
+    if (!allowedIp) {
+      throw new Error("Environment variable ALLOWED_IP is not set.");
+    }
+
+    // Check if the request IP matches the allowed IP
+    if (requestIp !== allowedIp) {
+      // If not, return 403 Forbidden
+      return new Response("Access Denied: Unauthorized IP address", {
+        status: 403,
+      });
+    }
+
     // Fetch the password from environment variables
     const AUTH_TOKEN = context.env.AUTH_TOKEN;
 
@@ -30,7 +53,7 @@ export const onRequest: PagesFunction = async (context) => {
       });
     }
 
-    // If authentication succeeds, forward the request to Remix
+    // If both IP check and auth check succeed, forward the request to Remix
     return remixHandler(context);
   } catch (error) {
     // Log the error and return a 500 response
