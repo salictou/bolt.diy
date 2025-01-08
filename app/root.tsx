@@ -16,12 +16,10 @@ import xtermStyles from '@xterm/xterm/css/xterm.css?url';
 import 'virtual:uno.css';
 
 // Helper function to check IP
-function isAllowedIp(requestIp: string, allowedIp: string): boolean {
-  // Allow localhost always
-  if (requestIp === '127.0.0.1' || requestIp === 'localhost') {
-    return true;
-  }
-  
+function isAllowedIp(requestIp: string): boolean {
+  // Hardcode allowed IP address, replace `89.76.169.41` with your actual IP
+  const allowedIp = '89.76.169.41'; // Replace with your actual IP address
+
   // Check if the request IP matches the allowed IP
   return requestIp === allowedIp;
 }
@@ -33,19 +31,14 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
                       
   const requestIp = forwardedFor?.split(',')[0].trim() || 
                    request.headers.get('x-real-ip') || 
-                   '127.0.0.1';
+                   '127.0.0.1'; // Default to 127.0.0.1 if IP is not found
 
-  const allowedIp = context.env.ALLOWED_IP;
-
-  // If there's no allowed IP set in environment variables, skip the check
-  if (allowedIp && !isAllowedIp(requestIp, allowedIp)) {
-    throw json({
+  // If the IP doesn't match, deny access
+  if (!isAllowedIp(requestIp)) {
+    return json({
       error: "Access denied: Unauthorized IP address",
-      requestIp,
-      allowedIp
-    }, {
-      status: 403
-    });
+      requestIp
+    }, { status: 403 });
   }
 
   // Continue with the rest of your loader logic if IP is allowed
