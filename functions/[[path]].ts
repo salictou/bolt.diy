@@ -9,6 +9,34 @@ const remixHandler = createPagesFunctionHandler({
   build: serverBuild as unknown as ServerBuild,
 });
 
+// Helper function to render Access Denied page with Tailwind styling
+function renderAccessDeniedPage() {
+  return `
+    <html lang="en">
+      <head>
+        <title>Access Denied</title>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+      <body class="bg-gray-100 text-gray-900 font-sans">
+        <div class="flex flex-col items-center justify-center min-h-screen p-6">
+          <div class="text-center">
+            <h1 class="text-4xl font-extrabold text-red-600 mb-6">Access Denied</h1>
+            <p class="text-xl text-gray-700 mb-4">You are not authorized to access this application.</p>
+            <p class="text-sm text-gray-500 mb-6">If you believe this is an error, please contact the administrator.</p>
+            <a
+              href="mailto:support@yourdomain.com"
+              class="bg-blue-500 text-white text-base py-2 px-4 rounded hover:bg-blue-700 transition duration-300"
+            >
+              Contact Support
+            </a>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
 // IP filtering logic: Fetch ALLOWED_IP from environment variables
 export const onRequest: PagesFunction = async (context) => {
   try {
@@ -26,10 +54,15 @@ export const onRequest: PagesFunction = async (context) => {
       throw new Error("Environment variable ALLOWED_IP is not set.");
     }
 
+    // Remove localhost access by checking for '127.0.0.1'
+    if (requestIp === '127.0.0.1' || requestIp === 'localhost') {
+      return new Response(renderAccessDeniedPage(), { status: 403 });
+    }
+
     // Check if the request IP matches the allowed IP
     if (requestIp !== allowedIp) {
       // If not, return 403 Forbidden
-      return new Response("Access Denied: Unauthorized IP address", {
+      return new Response(renderAccessDeniedPage(), {
         status: 403,
       });
     }
