@@ -1,9 +1,0 @@
-# Allow access only from your IP address
-/* 200! 89.76.169.41
-
-# Redirect unauthorized traffic to a 403 Forbidden error
-/* /error403.html 403
-
-# Optional: Add specific rules for paths
-# For example, block access to admin routes for everyone
-/admin/* 403
