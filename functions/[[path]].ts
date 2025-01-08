@@ -38,44 +38,45 @@ export const onRequest: PagesFunction = async (context) => {
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-            <link rel="stylesheet" href="/styles/index.scss">
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
             <style>
               body {
                 font-family: 'Inter', sans-serif;
                 background-color: #f9fafb;
-                color: #1f2937;
+                color: #000000;
                 margin: 0;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 height: 100vh;
-              }
-              .container {
                 text-align: center;
               }
+              .container {
+                max-width: 400px;
+              }
               .title {
-                font-size: 2rem;
+                font-size: 1.5rem;
                 font-weight: 700;
-                color: #e11d48;
+                color: #000000;
+                margin-bottom: 1rem;
               }
               .description {
-                font-size: 1.25rem;
-                margin: 1rem 0;
-                color: #374151;
+                font-size: 0.875rem;
+                margin: 0.5rem 0;
+                color: #000000;
               }
               .support-link {
                 display: inline-block;
                 margin-top: 1rem;
-                padding: 0.5rem 1rem;
-                background-color: #2563eb;
+                padding: 0.25rem 0.75rem;
+                background-color: #000000;
                 color: #ffffff;
                 text-decoration: none;
-                border-radius: 0.375rem;
+                font-size: 0.875rem;
+                border-radius: 0.25rem;
                 transition: background-color 0.3s;
               }
               .support-link:hover {
-                background-color: #1d4ed8;
+                background-color: #333333;
               }
             </style>
           </head>
