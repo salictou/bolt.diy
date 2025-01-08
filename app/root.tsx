@@ -15,23 +15,44 @@ import xtermStyles from '@xterm/xterm/css/xterm.css?url';
 
 import 'virtual:uno.css';
 
-// Add IP restriction loader
-export async function loader({ request, context }: LoaderFunctionArgs) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
-             request.headers.get('x-real-ip') ||
-             '127.0.0.1';
-             
-  const allowedIp = context.env.ALLOWED_IP || '127.0.0.1';
+// Helper function to check IP
+function isAllowedIp(requestIp: string, allowedIp: string): boolean {
+  // Allow localhost always
+  if (requestIp === '127.0.0.1' || requestIp === 'localhost') {
+    return true;
+  }
   
-  if (ip !== allowedIp && ip !== '127.0.0.1') {
+  // Check if the request IP matches the allowed IP
+  return requestIp === allowedIp;
+}
+
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  // Get the IP from the request
+  const forwardedFor = request.headers.get('cf-connecting-ip') || 
+                      request.headers.get('x-forwarded-for');
+                      
+  const requestIp = forwardedFor?.split(',')[0].trim() || 
+                   request.headers.get('x-real-ip') || 
+                   '127.0.0.1';
+
+  const allowedIp = context.env.ALLOWED_IP;
+
+  // If there's no allowed IP set in environment variables, skip the check
+  if (allowedIp && !isAllowedIp(requestIp, allowedIp)) {
     throw json({
-      error: "Access denied: Unauthorized IP address"
+      error: "Access denied: Unauthorized IP address",
+      requestIp,
+      allowedIp
     }, {
       status: 403
     });
   }
 
-  return json({ ok: true });
+  // Continue with the rest of your loader logic if IP is allowed
+  return json({ 
+    ok: true,
+    ip: requestIp // Useful for debugging
+  });
 }
 
 export const links: LinksFunction = () => [
@@ -101,6 +122,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const theme = useStore(themeStore);
+  const data = useLoaderData<typeof loader>();
 
   useEffect(() => {
     logStore.logSystem('Application initialized', {
@@ -108,6 +130,7 @@ export default function App() {
       platform: navigator.platform,
       userAgent: navigator.userAgent,
       timestamp: new Date().toISOString(),
+      clientIp: data.ip // Log the IP for debugging
     });
   }, []);
 
@@ -118,7 +141,6 @@ export default function App() {
   );
 }
 
-// Add error boundary for IP restriction errors
 export function ErrorBoundary() {
   const theme = useStore(themeStore);
 
@@ -135,9 +157,10 @@ export function ErrorBoundary() {
         <Links />
       </head>
       <body>
-        <div className="flex flex-col items-center justify-center h-screen">
+        <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p>You are not authorized to access this application.</p>
+          <p className="text-center">You are not authorized to access this application.</p>
+          <p className="text-center mt-2 text-sm opacity-75">If you believe this is an error, please contact the administrator.</p>
         </div>
         <Scripts />
       </body>
